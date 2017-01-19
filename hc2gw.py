@@ -4,10 +4,10 @@ import logging
 import requests
 import sys
 
-#logging.basicConfig(stream=sys.stderr, level=logging.INFO)
+logging.basicConfig(stream=sys.stderr, level=logging.INFO)
 
-def send_hc2_api(verb, path, post_data=None):
-    url = "http://" + user + ":" + password + "@" + host + "/api" + path
+def send_hc2_api(verb, authority, path, post_data=None):
+    url = "http://" + authority + "/api" + path
     logging.info(verb + " " + url)
     if post_data:
         logging.debug(post_data)
@@ -20,13 +20,13 @@ def send_hc2_api(verb, path, post_data=None):
     logging.debug(r.text)
     return r.json()
     
-def set_value(id, value):
+def set_value(authority, id, value):
     path = "/devices/" + str(id) + "/action/setValue"
     payload = " { \"args\" : [" + str(value) + "] }"
-    send_hc2_api("POST", path, payload)
+    send_hc2_api("POST", authority, path, payload)
 
-def get_value(id):
-    response = send_hc2_api("GET", "/devices/" + str(id))
+def get_value(authority, id):
+    response = send_hc2_api("GET", authority, "/devices" + str(id))
     if "properties" in response:
         if "value" in response["properties"]:
             return response["properties"]["value"]
@@ -37,15 +37,21 @@ def get_value(id):
         logging.warning("No properties for device " + str(id))
         return "N/A"
 
-def get_devices():
-    response = send_hc2_api("GET", "/devices")
+def get_devices(authority):
+    response = send_hc2_api("GET", authority, "/devices")
     logging.debug(response)
 
     real_devices = [device for device in response if device["roomID"] != 0]
     return real_devices
 
-def print_devices():
-    for d in get_devices():
+def get_rooms(authority):
+    response = send_hc2_api("GET", authority, "/rooms")
+    logging.debug(response)
+
+    return response
+
+def print_devices(authority):
+    for d in get_devices(authority):
         print("[" + str(d["id"]) + "]" +
               " @" + str(d["roomID"]) +
               " \"" + d["name"] + "\"" +
@@ -55,9 +61,7 @@ def print_devices():
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description = "Control Fibaro HC2.")
-    parser.add_argument("--host", required = True)
-    parser.add_argument("--user", required = True)
-    parser.add_argument("--password", required = True)
+    parser.add_argument("authority", help = "user, password and host part of URL (defined as authority) to Fibaro HC2. Example: admin:1234@192.168.1.100")
     subparsers = parser.add_subparsers(dest="command")
     
     parser_set_value = subparsers.add_parser("set_value")
@@ -69,20 +73,12 @@ if __name__ == "__main__":
     
     parser_get_devices = subparsers.add_parser("print_devices")
     
-    parser_make_oh_items = subparsers.add_parser("make_oh_items")
-    parser_make_oh_things = subparsers.add_parser("make_oh_things")
-    parser_make_oh_sitemap = subparsers.add_parser("make_oh_sitemap")
-
     args = parser.parse_args()
     
-    host = args.host
-    user = args.user
-    password = args.password
-    
     if args.command == "set_value":
-        set_value(args.id, args.value)
+        set_value(authority, args.id, args.value)
     elif args.command == "get_value":
-        value = get_value(args.id)
+        value = get_value(authority, args.id)
         print(str(value))
     elif args.command == "print_devices":
-        print_devices()
+        print_devices(authority)
