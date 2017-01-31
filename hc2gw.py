@@ -31,10 +31,10 @@ def get_value(authority, id):
         if "value" in response["properties"]:
             return response["properties"]["value"]
         else:
-            logging.warning("No value for device " + str(id))
+            logging.info("No value for device " + str(id))
             return "N/A"
     else:
-        logging.warning("No properties for device " + str(id))
+        logging.info("No properties for device " + str(id))
         return "N/A"
 
 def get_devices(authority):
