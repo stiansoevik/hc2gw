@@ -4,7 +4,7 @@ import logging
 import requests
 import sys
 
-logging.basicConfig(stream=sys.stderr, level=logging.INFO)
+logging.basicConfig(stream=sys.stderr, level=logging.WARNING)
 
 def send_hc2_api(verb, authority, path, post_data=None):
     url = "http://" + authority + "/api" + path
@@ -26,7 +26,7 @@ def set_value(authority, id, value):
     send_hc2_api("POST", authority, path, payload)
 
 def get_value(authority, id):
-    response = send_hc2_api("GET", authority, "/devices" + str(id))
+    response = send_hc2_api("GET", authority, "/devices/" + str(id))
     if "properties" in response:
         if "value" in response["properties"]:
             return response["properties"]["value"]
@@ -76,9 +76,9 @@ if __name__ == "__main__":
     args = parser.parse_args()
     
     if args.command == "set_value":
-        set_value(authority, args.id, args.value)
+        set_value(args.authority, args.id, args.value)
     elif args.command == "get_value":
-        value = get_value(authority, args.id)
+        value = get_value(args.authority, args.id)
         print(str(value))
     elif args.command == "print_devices":
-        print_devices(authority)
+        print_devices(args.authority)
