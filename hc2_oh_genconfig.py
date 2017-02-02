@@ -2,6 +2,8 @@
 import hc2gw
 import argparse
 import os
+import re
+
 hc2gw_cmd = os.path.dirname(os.path.realpath(__file__)) + "/hc2gw.py"
 
 def get_device_info_list(authority):
@@ -13,6 +15,7 @@ def get_device_info_list(authority):
         room = [room for room in rooms if room["id"] == dev["roomID"]][0]
         room_str = room["name"].encode('ascii', errors='ignore').replace(" ", "")
         name_str = dev["name"].encode('ascii', errors='ignore').replace(" ", "")
+        name_str = re.sub("[\W]+", "", name_str)
         item_str = "Hc2_" + room_str + "_" + name_str
         get_ch_str = "exec:command:hc2gw_get_" + id_str
         set_ch_str = "exec:command:hc2gw_set_" + id_str
