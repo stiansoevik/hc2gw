@@ -6,6 +6,9 @@ import re
 
 hc2gw_cmd = os.path.dirname(os.path.realpath(__file__)) + "/hc2gw.py"
 
+def get_authority_str(authority):
+    return "--user " + authority["user"] + " --password " + authority["password"] + " --host " + authority["host"]
+
 def get_device_info_list(authority):
     devices = hc2gw.get_devices(authority)
     rooms = hc2gw.get_rooms(authority)
@@ -31,8 +34,8 @@ def make_items(authority):
 
 def make_things(authority):
     for dev in get_device_info_list(authority):
-        print("Thing " + dev["get_ch"] + " [command=\"" + hc2gw_cmd + " " + authority + " get_value " + dev["id"] + "\", interval=10]")
-        print("Thing " + dev["set_ch"] + " [command=\"" + hc2gw_cmd + " " + authority + " set_value " + dev["id"] + " %2$s\", interval=0, autorun=true]")
+        print("Thing " + dev["get_ch"] + " [command=\"" + hc2gw_cmd + " " + get_authority_str(authority) + " get_value " + dev["id"] + "\", interval=10]")
+        print("Thing " + dev["set_ch"] + " [command=\"" + hc2gw_cmd + " " + get_authority_str(authority) + " set_value " + dev["id"] + " %2$s\", interval=0, autorun=true]")
 
 def make_rules(authority):
     for dev in get_device_info_list(authority):
@@ -51,16 +54,19 @@ def make_rules(authority):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description = "Generate openHAB configuration files for HC2 devices.")
-    parser.add_argument("authority", help = "user, password and host part of URL (defined as authority) to Fibaro HC2. Example: admin:1234@192.168.1.100")
+    parser.add_argument("--user")
+    parser.add_argument("--password")
+    parser.add_argument("--host")
     subparsers = parser.add_subparsers(dest="type")
     subparsers.add_parser("items")
     subparsers.add_parser("things")
     subparsers.add_parser("rules")
     args = parser.parse_args()
+    authority = { "user": args.user, "password": args.password, "host": args.host }
 
     if args.type == "items":
-        make_items(args.authority)
+        make_items(authority)
     elif args.type == "things":
-        make_things(args.authority)
+        make_things(authority)
     elif args.type == "rules":
-        make_rules(args.authority)
+        make_rules(authority)

@@ -7,15 +7,15 @@ import sys
 logging.basicConfig(stream=sys.stderr, level=logging.WARNING)
 
 def send_hc2_api(verb, authority, path, post_data=None):
-    url = "http://" + authority + "/api" + path
+    url = "http://" + authority["host"] + "/api" + path
     logging.info(verb + " " + url)
     if post_data:
         logging.debug(post_data)
     
     if verb == "GET":
-        r = requests.get(url)
+        r = requests.get(url, auth=(authority["user"], authority["password"]))
     if verb == "POST":
-        r = requests.post(url, data = post_data)
+        r = requests.post(url, data = post_data, auth=(authority["user"], authority["password"]))
     
     logging.debug(r.text)
     return r.json()
@@ -55,13 +55,16 @@ def print_devices(authority):
         print("[" + str(d["id"]) + "]" +
               " @" + str(d["roomID"]) +
               " \"" + d["name"] + "\"" +
-              " = " + get_value(d["id"])
+              " = " + get_value(authority, d["id"])
               )
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description = "Control Fibaro HC2.")
-    parser.add_argument("authority", help = "user, password and host part of URL (defined as authority) to Fibaro HC2. Example: admin:1234@192.168.1.100")
+    parser.add_argument("--user")
+    parser.add_argument("--password")
+    parser.add_argument("--host")
+
     subparsers = parser.add_subparsers(dest="command")
     
     parser_set_value = subparsers.add_parser("set_value")
@@ -75,10 +78,12 @@ if __name__ == "__main__":
     
     args = parser.parse_args()
     
+    authority = { "user": args.user, "password": args.password, "host": args.host }
+
     if args.command == "set_value":
-        set_value(args.authority, args.id, args.value)
+        set_value(authority, args.id, args.value)
     elif args.command == "get_value":
-        value = get_value(args.authority, args.id)
+        value = get_value(authority, args.id)
         print(str(value))
     elif args.command == "print_devices":
-        print_devices(args.authority)
+        print_devices(authority)
